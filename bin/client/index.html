@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+    <title>PferdeScheiße</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.4.0.min.js"></script>
+    <link crossorigin="anonymous" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" rel="stylesheet">
+    <script crossorigin="anonymous" integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o"
+            src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+</head>
+<script>
+    var ingame = false;
+    var setup = false;
+    $(function () {
+        var socket = io();
+        var answer = window.prompt("Bitte Name eingeben", "FranzHuberMeier");
+        socket.emit('Iam', answer);
+        socket.on('HI', function (msg) {
+            console.log(msg);
+            setup = true;
+        });
+        socket.on('DaR00ms', function (rooms) {
+            if (setup && !ingame) {
+                $("#rooms").empty();
+                Object.keys(rooms).forEach(key => {
+                    console.log(key, rooms[key]);
+                    var text = '<div class="child flipped"><h1>' + rooms[key]['NAME'] + '</h1>' +
+                        '<p> current players: ' + rooms[key]['PLAYERS'] + ' ' +
+                        '<br/>Status: ' + rooms[key]['STATUS'] + '</p></div>';
+                    if (rooms[key]['STATUS'] === "JOINABLE") {
+                        text += '<button id="' + rooms[key]['NAME'] + '" name="b1" class="btn btn-success">JOIN</button>';
+                    }
+                    $(text).appendTo($("#rooms"));
+                });
+            }
+        });
+
+        $(document).on('click', '#ROOM1', function () {
+            console.log("clicked");
+            socket.emit('JOIN', "ROOM1");
+        });
+        $(document).on('click', '#ROOM2', function () {
+            socket.emit('JOIN', "ROOM2");
+        });
+        $(document).on('click', '#ROOM3', function () {
+            socket.emit('JOIN', "ROOM3");
+        });
+        $(document).on('click', '#ROOM4', function () {
+            socket.emit('JOIN', "ROOM4");
+        });
+
+        socket.on("AddPlayer", function (players) {
+            Object.keys(players).forEach(key => {
+                console.log(players[key]);
+            });
+        });
+
+        socket.on("JOINED", function (msg) {
+            $("body").empty();
+            console.log(msg);
+            ingame = true;
+        });
+
+        socket.on("StartButton", function (msg) {
+            $("body").empty();
+            console.log("StartButton appeared!");
+        });
+
+        socket.on('ERROR', function (msg) {
+            $("body").prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                '<strong>ERROR:</strong>' + msg +
+                '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                '<span aria-hidden="true">&times;</span></button></div>');
+        });
+    });
+</script>
+<body class="d-flex flex-column h-100">
+<div class="container" id="rooms">
+</div>
+</body>
+</html>
